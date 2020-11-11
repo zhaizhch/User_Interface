@@ -167,7 +167,7 @@ public class UserController {
             }
         } else {
             // 修改非当前用户，不需要校验原始密码，需要校验权限是否满足，(在拦截器中校验, userId为空会报无操作权限，直接在这校验)
-            if (loginUser.getAuthority() < 3) {
+            if (loginUser.getAuthority() < 2) {
                 return RestfulEntity.getAuthFailure(DisplayErrorCode.USER_NO_OPERATION_AUTHORITY);
             }
         }

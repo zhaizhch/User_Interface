@@ -4,7 +4,7 @@ public enum DisplayErrorCode {
     userNameCheck(255,"用户名最长32位，已超过长度限制"),
     registerCheck(0,"注册成功"),
     userGroupCheck(226,"用户组字段最长32位，已超过长度限制"),
-    userResult(2,"无此用户"),
+    userResult(2,"查询失败"),
     userUpdate(0,"修改成功"),
     userLogoutSuccess(0,"注销成功"),
     userLogoutFailure(234,"注销失败"),
