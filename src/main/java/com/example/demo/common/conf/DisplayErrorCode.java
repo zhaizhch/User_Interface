@@ -11,6 +11,7 @@ public enum DisplayErrorCode {
     userStatusCheck(230,"请登录"),
     userStatusFailure(231,"认证失败"),
     userResultFailure(234,"用户名或密码错误"),
+    LOGIN_MESSAGE_UPDATE_FAILURE(235,"登录信息更新失败"),
     USER_AUTH_ERROR(1020, "用户认证失败"),
     USER_NAME_LENGTH_ERROR(1021, "用户名最长32位，已超过长度限制"),
     USER_NAME_EXIST_ERROR(1022, "用户名已存在"),

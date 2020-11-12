@@ -20,11 +20,24 @@
             <if test="userName != null and userName != ''">
                 and userName = #{userName}
             </if>
-            <if test="userId != null and userId != ''">
-                and userId = #{userId}
-            </if>
+        </where>
+        limit 1
+    </select>
+    <select id="queryUserInfoByToken" resultMap="UserInfo">
+        select userId, tenant, userName, password, token, landTime, authority, belongTo
+        from User
+        <where>
             <if test="token != null and token != ''">
                 and token = #{token}
+            </if>
+        </where>
+    </select>
+    <select id="queryUserInfoById" resultMap="UserInfo">
+        select userId, tenant, userName, password, token, landTime, authority, belongTo
+        from User
+        <where>
+            <if test="userId != null and userId != ''">
+                and userId = #{userId}
             </if>
         </where>
     </select>
@@ -71,6 +84,9 @@
             <if test="password != null and password != ''">
                 password = #{password},
             </if>
+            <if test="userName != null and userName != ''">
+                userName = #{userName},
+            </if>
             <if test="authority != null">
                 authority = #{authority},
             </if>
@@ -85,8 +101,8 @@
             </if>
         </set>
         <where>
-            <if test="userName != null and userName != ''">
-                userName = #{userName}
+            <if test="userId != null and userId != ''">
+                userId = #{userId}
             </if>
         </where>
     </update>

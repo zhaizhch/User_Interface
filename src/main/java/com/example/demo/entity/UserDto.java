@@ -39,10 +39,10 @@ public class UserDto {
     }
 
 
-
+    @NotEmpty(message = "用户名不能为空", groups = {updateGroup.class, resetPwdGroup.class, tokenUpdateGroup.class})
     private String userId;
 
-    @NotEmpty(message = "用户名不能为空", groups = {addGroup.class, loginGroup.class, updateGroup.class, resetPwdGroup.class,tokenUpdateGroup.class})
+    @NotEmpty(message = "用户名不能为空", groups = {addGroup.class, loginGroup.class, updateGroup.class})
     private String userName;
 
     @NotEmpty(message = "用户密码不能为空", groups = {addGroup.class, loginGroup.class, resetPwdGroup.class})
@@ -60,7 +60,7 @@ public class UserDto {
     @NotEmpty(message = "用户id列表不能为空", groups = {delGroup.class})
     private List<String> userIds;
 
-    @NotEmpty(message = "用户id列表不能为空", groups = {userCheckGroup.class,tokenUpdateGroup.class})
+    @NotEmpty(message = "用户token为空", groups = {userCheckGroup.class,tokenUpdateGroup.class})
     private String token;
     private String tenant;
     private Date createTime;

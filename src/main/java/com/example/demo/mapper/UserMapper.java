@@ -12,7 +12,11 @@ import java.util.List;
 @Component
 public interface UserMapper {
 
-    List<User> queryUserInfoByName(UserDto userDto);
+    User queryUserInfoByName(UserDto userDto);
+
+    User queryUserInfoById(UserDto userDto);
+
+    List<User> queryUserInfoByToken(UserDto userDto);
 
     List<User> queryAllUserInfo(UserDto userDto);
 

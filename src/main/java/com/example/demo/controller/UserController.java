@@ -42,16 +42,13 @@ public class UserController {
             @ApiParam(value = "用户登录信息", required = true) @RequestBody @Validated(UserDto.loginGroup.class) UserDto userDto
     ) {
         // 校验用户名是否存在
-        List<User> userInfoList = userService.queryUserInfoByUserName(userDto.getUserName());
-        if (userInfoList == null) {
-            return RestfulEntity.getFailure(DisplayErrorCode.userResult);
-        }
-        if (userInfoList.isEmpty()) {
+        User user = userService.queryUserInfoByUserName(userDto.getUserName());
+        //查询失败或者用户不存在
+        if (user == null) {
             return RestfulEntity.getFailure(DisplayErrorCode.userResultFailure);
         }
         // 校验密码
         String pwd = CommonUtils.encodeByMd5(userDto.getPassword());
-        User user = userInfoList.get(0);
         if (!pwd.equals(user.getPassword())) {
             return RestfulEntity.getFailure(DisplayErrorCode.userResultFailure);
         }
@@ -61,18 +58,18 @@ public class UserController {
         HttpSession session = request.getSession();
         session.setAttribute("loginUser", user);
         // token更新到数据库
-        UserDto userInfoDto1 = new UserDto();
-        userInfoDto1.setUserName(user.getUserName());
-        userInfoDto1.setToken(token);
+        UserDto userInfoDto = new UserDto();
+        userInfoDto.setUserId(user.getUserId());
+        userInfoDto.setToken(token);
         // 登录成功后需要更新landTime
-        userInfoDto1.setLandTime(new Date());
-        int ret = userService.updateUserInfo(userInfoDto1);
+        userInfoDto.setLandTime(new Date());
+        int ret = userService.updateUserInfo(userInfoDto);
         if (ret == -1) {
-            return RestfulEntity.getFailure(DisplayErrorCode.userResultFailure);
+            return RestfulEntity.getFailure(DisplayErrorCode.LOGIN_MESSAGE_UPDATE_FAILURE);
         }
         JSONObject result = new JSONObject();
-        User user1=(userService.queryUserInfoByUserName(userDto.getUserName())).get(0);
-        result.put("data", user1);
+        User resultUser=(userService.queryUserInfoByUserName(userDto.getUserName()));
+        result.put("data", resultUser);
         return RestfulEntity.getSuccess(result,"登陆成功");
     }
 
@@ -83,10 +80,11 @@ public class UserController {
         HttpSession session = request.getSession();
         User loginUser = (User) session.getAttribute("loginUser");
         session.removeAttribute("loginUser");
+        session.invalidate();
         // 登出后更新数据库token
         UserDto userDto = new UserDto();
         userDto.setToken(CommonUtils.getRandomStr());
-        userDto.setUserName(loginUser.getUserName());
+        userDto.setUserId(loginUser.getUserId());
         int ret = userService.updateUserInfo(userDto);
         if (ret == -1) {
             return RestfulEntity.getFailure(DisplayErrorCode.userLogoutFailure);
@@ -105,11 +103,8 @@ public class UserController {
             return RestfulEntity.getFailure(DisplayErrorCode.USER_NAME_LENGTH_ERROR);
         }
         // 校验用户名是否重复
-        List<User> userInfoList = userService.queryUserInfoByUserName(userDto.getUserName());
-        if (userInfoList == null) {
-            return RestfulEntity.getFailure(DisplayErrorCode.DB_QUERY_ERROR);
-        }
-        if (userInfoList.size() > 0) {
+        User user = userService.queryUserInfoByUserName(userDto.getUserName());
+        if (user!=null) {
             return RestfulEntity.getFailure(DisplayErrorCode.USER_NAME_EXIST_ERROR);
         }
         // 校验密码格式 8-20位
@@ -148,7 +143,7 @@ public class UserController {
             return RestfulEntity.getFailure(DisplayErrorCode.userStatusCheck);
         }
 
-        if (loginUser.getUserName().equals(userDto.getUserName())) {
+        if (loginUser.getUserId().equals(userDto.getUserId())) {
             if(!userService.tokenCheck(loginUser)){
                 logger.info("Token不匹配 -> resetPassword = " + userDto);
                 return RestfulEntity.getFailure(DisplayErrorCode.userStatusCheck);
@@ -158,11 +153,11 @@ public class UserController {
                 return RestfulEntity.getFailure(DisplayErrorCode.USER_RAWPWD_NULL_ERROR);
             }
             // 校验原始密码是否正确
-            List<User> userInfoList = userService.queryUserInfoByUserName(userDto.getUserName());
-            if (userInfoList == null || userInfoList.isEmpty()) {
+            User user = userService.queryUserInfoByUserId(userDto.getUserId());
+            if (user == null ) {
                 return RestfulEntity.getFailure(DisplayErrorCode.USER_RESETPWD_ERROR);
             }
-            if (!userInfoList.get(0).getPassword().equals(CommonUtils.encodeByMd5(userDto.getRawPassword()))) {
+            if (!user.getPassword().equals(CommonUtils.encodeByMd5(userDto.getRawPassword()))) {
                 return RestfulEntity.getFailure(DisplayErrorCode.USER_RAWPWD_CHECK_ERROR);
             }
         } else {
@@ -225,39 +220,28 @@ public class UserController {
             HttpServletRequest request,
             @ApiParam(value = "用户信息", required = true) @RequestBody @Validated(UserDto.updateGroup.class) UserDto userDto
     ) {
-        logger.info("updateUserInfo -> userInfoDto = " + userDto);
-        // 校验用户名长度
-/*        if (userDto.getUserName().length() > 32) {
-            return RestfulEntity.getFailure(DisplayErrorCode.USER_NAME_LENGTH_ERROR);
-        }*/
-        // 校验用户名是否重复, 通过用户名去查询
-
         HttpSession session = request.getSession();
         User loginUserInfo = (User) session.getAttribute("loginUser");
-        List<User> userInfoList = userService.queryUserInfoByUserName(userDto.getUserName());
-        if (userInfoList == null) {
-            return RestfulEntity.getFailure(DisplayErrorCode.DB_QUERY_ERROR);
+        logger.info("updateUserInfo -> userInfoDto = " + userDto);
+        if(loginUserInfo.getAuthority()<2) {
+            return RestfulEntity.getAuthFailure(DisplayErrorCode.USER_NO_OPERATION_AUTHORITY);
         }
-        if(loginUserInfo.getUserName().equals(userDto.getUserName())){
-            if(!userService.tokenCheck(loginUserInfo)){
-                logger.info("Token不匹配 -> updateUserInfo = " + userDto);
-                return RestfulEntity.getFailure(DisplayErrorCode.userStatusCheck);
-            }
-        }else{
-            logger.info("userName不匹配 -> updateUserInfo = " + userDto);
-            return RestfulEntity.getFailure(DisplayErrorCode.userStatusCheck);
+        // 校验用户名长度
+        if (userDto.getUserName().length() > 32) {
+            return RestfulEntity.getFailure(DisplayErrorCode.USER_NAME_LENGTH_ERROR);
         }
-
-        /*//不需要修改用户名
-        if (userInfoList.size() > 0 && (!userInfoList.get(0).getUserId().equals(userDto.getUserId()))) {
+        // 校验用户名是否重复, 通过用户名去查询
+        User user = userService.queryUserInfoByUserName(userDto.getUserName());
+        if (user!=null&& (!user.getUserId().equals(userDto.getUserId()))) {
             return RestfulEntity.getFailure(DisplayErrorCode.USER_NAME_EXIST_ERROR);
-        }*/
+        }
         // 校验权限格式 1, 一般 2, 最高
         if (!Arrays.asList(AUTHORITY_LEVEL).contains(userDto.getAuthority())) {
             return RestfulEntity.getFailure(DisplayErrorCode.USER_AUTHORITY_CHECK_ERROR);
         }
         // 更新用户信息，不能改密码
         UserDto userInfoDto1 = new UserDto();
+        userInfoDto1.setUserId(userDto.getUserId());
         userInfoDto1.setBelongTo(userDto.getBelongTo());
         userInfoDto1.setUserName(userDto.getUserName());
         userInfoDto1.setAuthority(userDto.getAuthority());
@@ -269,7 +253,7 @@ public class UserController {
         // 更新session中的用户名以及权限
 
         // 如果修改的是当前登录账户，权限改变，须重新登录 TODO 测试
-        if (userDto.getUserName().equals(loginUserInfo.getUserName())) {
+        if (userDto.getUserId().equals(loginUserInfo.getUserId())) {
             if (!userDto.getAuthority().equals(loginUserInfo.getAuthority())) {
                 session.removeAttribute("loginUser");
                 // 修改当前登录的用户成功
@@ -295,15 +279,7 @@ public class UserController {
         if(loginUser==null){
             return RestfulEntity.getFailure(DisplayErrorCode.userStatusCheck);
         }
-        String testToken="3344577";
-        if(userDto.getToken().equals(testToken)){
-            JSONObject result = new JSONObject();
-            result.put("userId","inner");
-            result.put("userName","inner");
-            result.put("belongTo","video-test");
-            result.put("authority","3");
-            return RestfulEntity.getSuccess(result, null);
-        }
+        //判断userDto是否存在且是否登陆
         List<User> userInfoList = userService.queryUserInfoByToken(userDto);
 
         if (userInfoList == null||userInfoList.size()==0) {
@@ -315,27 +291,18 @@ public class UserController {
             logger.info("用户未登录:userCheck -> userCheck = " + userDto);
             return RestfulEntity.getFailure(DisplayErrorCode.userStatusCheck);
         }
-
+        //判断token是否匹配
         if(!userService.tokenCheck(loginUser))
         {
             logger.info("Token不匹配:userCheck -> userCheck = " + userDto);
             return RestfulEntity.getFailure(DisplayErrorCode.userStatusCheck);
-        }
-
-        Date landTime = userInfoList.get(0).getLandTime();
-        if ((DateUtil.getTimeDifference(new Date(), landTime) > 12)) {
-            return RestfulEntity.getFailure(DisplayErrorCode.TOKEN_QUERY_ERROR2);
-        }
-
-        if (!Arrays.asList(AUTHORITY_LEVEL).contains(user.getAuthority())) {
-            return RestfulEntity.getFailure(DisplayErrorCode.USER_AUTHORITY_CHECK_ERROR);
         }
         JSONObject result = new JSONObject();
         result.put("data", userInfoList);
         return RestfulEntity.getSuccess(result, "检查用户token成功！");
     }
 
-    @ApiOperation(value = "用户token更新")
+/*    @ApiOperation(value = "用户token更新")
     @PostMapping(value = "/userTokenUpdate")
     public RestfulEntity<JSONObject> userTokenUpdate(
             HttpServletRequest request,
@@ -344,13 +311,13 @@ public class UserController {
         //验证该用户是否在登录状态
         HttpSession session = request.getSession();
         User loginUser = (User) session.getAttribute("loginUser");
-        if(loginUser==null||!(loginUser.getUserName().equals(userDto.getUserName()))){
+        if(loginUser==null||!(loginUser.getUserId().equals(userDto.getUserId()))){
             logger.info("用户未登录 -> userTokenUpdate = " + userDto);
             return RestfulEntity.getFailure(DisplayErrorCode.userStatusCheck);
         }
         logger.info("userTokenUpdate -> userTokenUpdate = " + userDto);
-        List<User> userInfoList = userService.queryUserInfoByUserName(userDto.getUserName());
-        if(userInfoList==null || userInfoList.size()==0){
+        User user = userService.queryUserInfoByUserName(userDto.getUserName());
+        if(user==null){
             try {
                 RestfulEntity<JSONObject> result = addUserInfo(userDto);
                 if(!result.getStatus().equals("0")){
@@ -368,7 +335,7 @@ public class UserController {
         }
         UserDto userDto1=new UserDto();
         userDto1.setToken(userDto.getToken());
-        userDto1.setUserName(userDto.getUserName());
+        userDto1.setUserId(userDto.getUserId());
         int ret = userService.updateUserInfo(userDto1);
         if (ret == -1) {
             return RestfulEntity.getFailure(DisplayErrorCode.userResultFailure);
@@ -376,6 +343,6 @@ public class UserController {
         JSONObject result = new JSONObject();
         result.put("data", userDto);
         return RestfulEntity.getSuccess(result,"Token更新成功");
-    }
+    }*/
 
 }

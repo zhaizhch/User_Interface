@@ -47,16 +47,30 @@ public class UserService {
         }
     }
 
-    public List<User> queryUserInfoByUserName(String userName) {
+    public User queryUserInfoByUserName(String userName) {
         try {
             UserDto userDto = new UserDto();
             userDto.setUserName(userName);
-            List<User> userInfoList = userMapper.queryUserInfoByName(userDto);
-            logger.info("queryUserInfoByUserName -> userInfoList = " + userInfoList);
-            return userInfoList;
+            User user = userMapper.queryUserInfoByName(userDto);
+            logger.info("queryUserInfoByUserName -> userInfoList = " + user);
+            return user;
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             logger.info("查询数据失败, queryUserInfoByUserName -> userName = " + userName);
+            return null;
+        }
+    }
+
+    public User queryUserInfoByUserId(String userId) {
+        try {
+            UserDto userDto = new UserDto();
+            userDto.setUserId(userId);
+            User user = userMapper.queryUserInfoById(userDto);
+            logger.info("queryUserInfoByUserId -> userInfoList = " + user);
+            return user;
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            logger.info("查询数据失败, queryUserInfoByUserId -> userId = " + userId);
             return null;
         }
     }
@@ -85,7 +99,7 @@ public class UserService {
 
     public List<User> queryUserInfoByToken(UserDto userDto) {
         try{
-            List<User> userInfoList = userMapper.queryUserInfoByName(userDto);
+            List<User> userInfoList = userMapper.queryUserInfoByToken(userDto);
             logger.info("queryUserInfoByToken -> userInfoList = " + userInfoList);
             return userInfoList;
         }catch (Exception e) {
@@ -115,7 +129,7 @@ public class UserService {
         int ret = -1;
         // 更新密码
         UserDto userDto1 = new UserDto();
-        userDto1.setUserName(userDto.getUserName());
+        userDto1.setUserId(userDto.getUserId());
         userDto1.setPassword(CommonUtils.encodeByMd5(userDto.getPassword()));
         try {
             ret = userMapper.updateUserInfo(userDto1);
@@ -151,7 +165,7 @@ public class UserService {
         try {
             UserDto userInfoDto = new UserDto();
             userInfoDto.setToken(user.getToken());
-            List<User> userInfoList = userMapper.queryUserInfoByName(userInfoDto);
+            List<User> userInfoList = userMapper.queryUserInfoByToken(userInfoDto);
             if (userInfoList.size() > 0) {
                 Date landTime = userInfoList.get(0).getLandTime();
                 // 登录时间超过12小时，自动退出
@@ -166,4 +180,6 @@ public class UserService {
         }
         return false;
     }
+
+
 }
