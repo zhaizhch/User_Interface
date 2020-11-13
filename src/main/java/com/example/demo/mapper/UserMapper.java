@@ -26,8 +26,5 @@ public interface UserMapper {
 
     int updateUserInfo(UserDto userDto);
 
-    int deleteUserInfoByName(UserDto userDto);
-
-    int deleteUserInfoByToken(UserDto userDto);
 
 }

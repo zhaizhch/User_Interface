@@ -2,9 +2,7 @@ package com.example.demo.entity;
 
 import java.util.Date;
 
-/**
- * @author ZhaiZhch
- */
+//数据库中保存的用户数据
 public class User {
     private String userId;
     private String tenant;

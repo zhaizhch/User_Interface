@@ -45,12 +45,12 @@ public class UserController {
         User user = userService.queryUserInfoByUserName(userDto.getUserName());
         //查询失败或者用户不存在
         if (user == null) {
-            return RestfulEntity.getFailure(DisplayErrorCode.userResultFailure);
+            return RestfulEntity.getFailure(DisplayErrorCode.USER_RESULTFAILURE);
         }
         // 校验密码
         String pwd = CommonUtils.encodeByMd5(userDto.getPassword());
         if (!pwd.equals(user.getPassword())) {
-            return RestfulEntity.getFailure(DisplayErrorCode.userResultFailure);
+            return RestfulEntity.getFailure(DisplayErrorCode.USER_RESULTFAILURE);
         }
         // 生成token
         String token = CommonUtils.getRandomStr();
@@ -77,6 +77,7 @@ public class UserController {
     @ApiOperation(value = "用户登出")
     @GetMapping(value = "/logout")
     public RestfulEntity userLogout(HttpServletRequest request) {
+        //销毁session
         HttpSession session = request.getSession();
         User loginUser = (User) session.getAttribute("loginUser");
         session.removeAttribute("loginUser");
@@ -87,7 +88,7 @@ public class UserController {
         userDto.setUserId(loginUser.getUserId());
         int ret = userService.updateUserInfo(userDto);
         if (ret == -1) {
-            return RestfulEntity.getFailure(DisplayErrorCode.userLogoutFailure);
+            return RestfulEntity.getFailure(DisplayErrorCode.USER_LOGOUT_FAILURE);
         }
         return RestfulEntity.getSuccess("用户登出成功");
     }
@@ -137,17 +138,13 @@ public class UserController {
         HttpSession session = request.getSession();
         User loginUser = (User) session.getAttribute("loginUser");
 
-        // 修改当前用户信息，需要校验原始密码
-        if(loginUser==null){
-            logger.info("未登录 -> resetPassword = " + userDto);
-            return RestfulEntity.getFailure(DisplayErrorCode.userStatusCheck);
+        //检验目前登录用户是否有效
+        if(!userService.tokenCheck(loginUser)){
+            logger.info("Token不匹配 -> resetPassword = " + userDto);
+            return RestfulEntity.getFailure(DisplayErrorCode.USER_STATUS_CHECK);
         }
 
         if (loginUser.getUserId().equals(userDto.getUserId())) {
-            if(!userService.tokenCheck(loginUser)){
-                logger.info("Token不匹配 -> resetPassword = " + userDto);
-                return RestfulEntity.getFailure(DisplayErrorCode.userStatusCheck);
-            }
             // 校验原始密码是否为空
             if (StringUtils.isEmpty(userDto.getRawPassword())) {
                 return RestfulEntity.getFailure(DisplayErrorCode.USER_RAWPWD_NULL_ERROR);
@@ -171,8 +168,11 @@ public class UserController {
         if (!userDto.getPassword().matches(compile)) {
             return RestfulEntity.getFailure(DisplayErrorCode.USER_PWD_FORMAT_ERROR);
         }
-        // 更新密码
-        int ret = userService.resetPassword(userDto);
+        // 更新密码,只传入userId和pwd
+        UserDto userDto1=new UserDto();
+        userDto1.setUserId(userDto.getUserId());
+        userDto1.setPassword(userDto.getPassword());
+        int ret = userService.resetPassword(userDto1);
         if (ret == -1) {
             return RestfulEntity.getFailure(DisplayErrorCode.USER_RESETPWD_ERROR);
         }
@@ -277,7 +277,7 @@ public class UserController {
         HttpSession session = request.getSession();
         User loginUser = (User) session.getAttribute("loginUser");
         if(loginUser==null){
-            return RestfulEntity.getFailure(DisplayErrorCode.userStatusCheck);
+            return RestfulEntity.getFailure(DisplayErrorCode.USER_STATUS_CHECK);
         }
         //判断userDto是否存在且是否登陆
         List<User> userInfoList = userService.queryUserInfoByToken(userDto);
@@ -289,13 +289,13 @@ public class UserController {
         if(!user.getUserName().equals(loginUser.getUserName()))
         {
             logger.info("用户未登录:userCheck -> userCheck = " + userDto);
-            return RestfulEntity.getFailure(DisplayErrorCode.userStatusCheck);
+            return RestfulEntity.getFailure(DisplayErrorCode.USER_STATUS_CHECK);
         }
         //判断token是否匹配
         if(!userService.tokenCheck(loginUser))
         {
             logger.info("Token不匹配:userCheck -> userCheck = " + userDto);
-            return RestfulEntity.getFailure(DisplayErrorCode.userStatusCheck);
+            return RestfulEntity.getFailure(DisplayErrorCode.USER_STATUS_CHECK);
         }
         JSONObject result = new JSONObject();
         result.put("data", userInfoList);

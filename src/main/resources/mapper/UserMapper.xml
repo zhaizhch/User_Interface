@@ -31,6 +31,7 @@
                 and token = #{token}
             </if>
         </where>
+        limit 1
     </select>
     <select id="queryUserInfoById" resultMap="UserInfo">
         select userId, tenant, userName, password, token, landTime, authority, belongTo
@@ -40,6 +41,7 @@
                 and userId = #{userId}
             </if>
         </where>
+        limit 1
     </select>
     <select id="queryAllUserInfo" resultMap="UserInfo">
         select userId, tenant, userName, password, token, landTime, authority, belongTo
@@ -62,20 +64,6 @@
             <foreach collection="userIds" item="id" open="(" close=")" separator=",">
                 #{id}
             </foreach>
-        </if>
-    </delete>
-    <delete id="deleteUserInfoByName">
-        delete from User
-        where userName in
-        <if test="userName != null and userName !=''">
-                #{userName}
-        </if>
-    </delete>
-    <delete id="deleteUserInfoByToken">
-        delete from User
-        where Token in
-        <if test="Token != null and Token != ''">
-                #{Token}
         </if>
     </delete>
     <update id="updateUserInfo">

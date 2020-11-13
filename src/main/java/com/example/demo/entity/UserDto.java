@@ -1,14 +1,11 @@
 package com.example.demo.entity;
 
-
-
-
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import javax.xml.crypto.Data;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+
+//函数的输入数据，对每个函数的输入进行分组校验
 
 public class UserDto {
 
@@ -51,7 +48,6 @@ public class UserDto {
     @NotEmpty(message = "用户belongTo不能为空", groups = {addGroup.class, updateGroup.class})
     private String belongTo;
 
-    @NotEmpty(message = "用户原始密码不能为空", groups = {resetPwdGroup.class})
     private String rawPassword;
 
     @NotNull(message = "用户权限不能为空", groups = {updateGroup.class})

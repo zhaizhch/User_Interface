@@ -2,6 +2,8 @@ package com.example.demo.entity;
 
 import java.util.List;
 
+// 获取成员列表后的分页输出
+
 public class PageResult {
     private int pageNum;
     /**
