@@ -36,21 +36,20 @@ public class UserDto {
     }
 
 
-    @NotEmpty(message = "用户名不能为空", groups = {updateGroup.class, resetPwdGroup.class, tokenUpdateGroup.class})
+    @NotEmpty(message = "用户Id不能为空", groups = {updateGroup.class, resetPwdGroup.class, tokenUpdateGroup.class})
     private String userId;
 
-    @NotEmpty(message = "用户名不能为空", groups = {addGroup.class, loginGroup.class, updateGroup.class})
+    @NotEmpty(message = "用户名不能为空", groups = {addGroup.class, loginGroup.class})
     private String userName;
 
     @NotEmpty(message = "用户密码不能为空", groups = {addGroup.class, loginGroup.class, resetPwdGroup.class})
     private String password;
 
-    @NotEmpty(message = "用户belongTo不能为空", groups = {addGroup.class, updateGroup.class})
+    @NotEmpty(message = "用户belongTo不能为空", groups = {addGroup.class})
     private String belongTo;
 
     private String rawPassword;
 
-    @NotNull(message = "用户权限不能为空", groups = {updateGroup.class})
     private Integer authority;
 
     @NotEmpty(message = "用户id列表不能为空", groups = {delGroup.class})

@@ -27,7 +27,7 @@ import java.util.List;
 
 @Api(value = "用户管理", tags = "用户管理接口")
 @RestController
-@RequestMapping("/dluc/user")
+@RequestMapping("/user")
 public class UserController {
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
     private static final Integer[] AUTHORITY_LEVEL = {1, 2};
@@ -93,9 +93,9 @@ public class UserController {
         return RestfulEntity.getSuccess("用户登出成功");
     }
 
-    @ApiOperation(value = "新增用户信息")
-    @PostMapping(value = "/addUserInfo")
-    public RestfulEntity<JSONObject> addUserInfo(
+    @ApiOperation(value = "用户注册")
+    @PostMapping(value = "/register")
+    public RestfulEntity<JSONObject> register(
             @ApiParam(value = "用户信息", required = true) @RequestBody @Validated(UserDto.addGroup.class) UserDto userDto
     ) {
         logger.info("addUserInfo -> userInfoDto = " + userDto);
@@ -125,7 +125,7 @@ public class UserController {
         }
         JSONObject result = new JSONObject();
         result.put("data", ret);
-        return RestfulEntity.getSuccess(result, "success");
+        return RestfulEntity.getSuccess(result,"success");
     }
 
     @ApiOperation(value = "重置密码")
@@ -144,13 +144,14 @@ public class UserController {
             return RestfulEntity.getFailure(DisplayErrorCode.USER_STATUS_CHECK);
         }
 
+        User user = userService.queryUserInfoByUserId(userDto.getUserId());
+
         if (loginUser.getUserId().equals(userDto.getUserId())) {
             // 校验原始密码是否为空
             if (StringUtils.isEmpty(userDto.getRawPassword())) {
                 return RestfulEntity.getFailure(DisplayErrorCode.USER_RAWPWD_NULL_ERROR);
             }
             // 校验原始密码是否正确
-            User user = userService.queryUserInfoByUserId(userDto.getUserId());
             if (user == null ) {
                 return RestfulEntity.getFailure(DisplayErrorCode.USER_RESETPWD_ERROR);
             }
@@ -159,7 +160,7 @@ public class UserController {
             }
         } else {
             // 修改非当前用户，不需要校验原始密码，需要校验权限是否满足，(在拦截器中校验, userId为空会报无操作权限，直接在这校验)
-            if (loginUser.getAuthority() < 2) {
+            if (loginUser.getAuthority() <= user.getAuthority()) {
                 return RestfulEntity.getAuthFailure(DisplayErrorCode.USER_NO_OPERATION_AUTHORITY);
             }
         }
@@ -214,6 +215,7 @@ public class UserController {
         return RestfulEntity.getSuccess(result, "success");
     }
 
+    //修改用户权限和用户群组，不能修改用户名
     @ApiOperation(value = "修改用户信息")
     @PostMapping(value = "/updateUserInfo")
     public RestfulEntity<JSONObject> updateUserInfo(
@@ -223,29 +225,40 @@ public class UserController {
         HttpSession session = request.getSession();
         User loginUserInfo = (User) session.getAttribute("loginUser");
         logger.info("updateUserInfo -> userInfoDto = " + userDto);
-        if(loginUserInfo.getAuthority()<2) {
+        User user = userService.queryUserInfoByUserId(userDto.getUserId());
+        if(loginUserInfo.getAuthority()<=user.getAuthority()) {
             return RestfulEntity.getAuthFailure(DisplayErrorCode.USER_NO_OPERATION_AUTHORITY);
         }
         // 校验用户名长度
-        if (userDto.getUserName().length() > 32) {
-            return RestfulEntity.getFailure(DisplayErrorCode.USER_NAME_LENGTH_ERROR);
-        }
-        // 校验用户名是否重复, 通过用户名去查询
-        User user = userService.queryUserInfoByUserName(userDto.getUserName());
-        if (user!=null&& (!user.getUserId().equals(userDto.getUserId()))) {
-            return RestfulEntity.getFailure(DisplayErrorCode.USER_NAME_EXIST_ERROR);
-        }
+        /*if(userDto.getUserName()!=null){
+            if (userDto.getUserName().length() > 32) {
+                return RestfulEntity.getFailure(DisplayErrorCode.USER_NAME_LENGTH_ERROR);
+            }
+            // 校验用户名是否重复, 通过用户名去查询
+            if (user!=null&& (!user.getUserId().equals(userDto.getUserId()))) {
+                return RestfulEntity.getFailure(DisplayErrorCode.USER_NAME_EXIST_ERROR);
+            }
+        }else{
+            userDto.setUserName(user.getUserName());
+        }*/
         // 校验权限格式 1, 一般 2, 最高
-        if (!Arrays.asList(AUTHORITY_LEVEL).contains(userDto.getAuthority())) {
-            return RestfulEntity.getFailure(DisplayErrorCode.USER_AUTHORITY_CHECK_ERROR);
+        if(userDto.getAuthority()!=null)
+        {
+            if (!Arrays.asList(AUTHORITY_LEVEL).contains(userDto.getAuthority())) {
+                return RestfulEntity.getFailure(DisplayErrorCode.USER_AUTHORITY_CHECK_ERROR);
+            }
+        }else{
+            userDto.setAuthority(user.getAuthority());
+        }
+        if(userDto.getBelongTo()==null){
+            userDto.setBelongTo(user.getBelongTo());
         }
         // 更新用户信息，不能改密码
         UserDto userInfoDto1 = new UserDto();
         userInfoDto1.setUserId(userDto.getUserId());
         userInfoDto1.setBelongTo(userDto.getBelongTo());
-        userInfoDto1.setUserName(userDto.getUserName());
+        //userInfoDto1.setUserName(userDto.getUserName());
         userInfoDto1.setAuthority(userDto.getAuthority());
-        userInfoDto1.setUpdateTime(new Date());
         int ret = userService.updateUserInfo(userInfoDto1);
         if (ret == -1) {
             return RestfulEntity.getFailure(DisplayErrorCode.DB_UPDATE_ERROR);

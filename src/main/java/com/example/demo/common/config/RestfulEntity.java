@@ -37,6 +37,11 @@ public class RestfulEntity<T> {
         this.msg = msg;
     }
 
+    public RestfulEntity(String status,  String msg) {
+        this.status = status;
+        this.msg = msg;
+    }
+
     public RestfulEntity( DisplayErrorCode code, T res) {
         this.status = String.valueOf(code.getVal());
         this.msg = code.getMessage();
@@ -134,7 +139,7 @@ public class RestfulEntity<T> {
     }
 
     public static <T> RestfulEntity<T> getSuccess(String msg) {
-        return new RestfulEntity<>("0",  null, msg);
+        return new RestfulEntity<>("0",  msg);
     }
 
     public String getStatus() {
