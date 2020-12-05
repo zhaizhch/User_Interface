@@ -12,7 +12,6 @@ public class RestfulEntity<T> {
     private String status;
 
 
-
     /**
      * 接口调用返回数据
      */
@@ -31,18 +30,18 @@ public class RestfulEntity<T> {
         this.res = res;
     }
 
-    public RestfulEntity(String status,  T res, String msg) {
+    public RestfulEntity(String status, T res, String msg) {
         this.status = status;
         this.res = res;
         this.msg = msg;
     }
 
-    public RestfulEntity(String status,  String msg) {
+    public RestfulEntity(String status, String msg) {
         this.status = status;
         this.msg = msg;
     }
 
-    public RestfulEntity( DisplayErrorCode code, T res) {
+    public RestfulEntity(DisplayErrorCode code, T res) {
         this.status = String.valueOf(code.getVal());
         this.msg = code.getMessage();
         this.res = res;
@@ -89,7 +88,7 @@ public class RestfulEntity<T> {
      * @return
      */
     public static <T> RestfulEntity<T> getFailure(DisplayErrorCode errorCode) {
-        return new RestfulEntity<>( errorCode, null);
+        return new RestfulEntity<>(errorCode, null);
     }
 
     /**
@@ -101,7 +100,7 @@ public class RestfulEntity<T> {
      * @return
      */
     public static <T> RestfulEntity<T> getFailure(Integer errorCode, String msg) {
-        return new RestfulEntity<>(String.valueOf(errorCode),  null, msg);
+        return new RestfulEntity<>(String.valueOf(errorCode), null, msg);
     }
 
     /**
@@ -114,7 +113,7 @@ public class RestfulEntity<T> {
      * @return
      */
     public static <T> RestfulEntity<T> getFailure(DisplayErrorCode errorCode, T res) {
-        return new RestfulEntity<>( errorCode, res);
+        return new RestfulEntity<>(errorCode, res);
     }
 
     /**
@@ -124,22 +123,23 @@ public class RestfulEntity<T> {
      * @return
      */
     public static <T> RestfulEntity<T> getSuccess(T res) {
-        return new RestfulEntity<>("0",  res);
+        return new RestfulEntity<>("0", res);
     }
 
     /**
      * 返回正常请求时调用
      * 自定义成功消息
+     *
      * @param res
      * @param <T>
      * @return
      */
     public static <T> RestfulEntity<T> getSuccess(T res, String msg) {
-        return new RestfulEntity<>("0",  res, msg);
+        return new RestfulEntity<>("0", res, msg);
     }
 
     public static <T> RestfulEntity<T> getSuccess(String msg) {
-        return new RestfulEntity<>("0",  msg);
+        return new RestfulEntity<>("0", msg);
     }
 
     public String getStatus() {

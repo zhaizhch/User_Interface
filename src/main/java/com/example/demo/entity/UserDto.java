@@ -55,7 +55,7 @@ public class UserDto {
     @NotEmpty(message = "用户id列表不能为空", groups = {delGroup.class})
     private List<String> userIds;
 
-    @NotEmpty(message = "用户token为空", groups = {userCheckGroup.class,tokenUpdateGroup.class})
+    @NotEmpty(message = "用户token为空", groups = {userCheckGroup.class, tokenUpdateGroup.class})
     private String token;
     private String tenant;
     private Date createTime;
@@ -74,25 +74,33 @@ public class UserDto {
     private Integer pageSize;
 
 
-    public Date getLoseTime(){return loseTime;}
+    public Date getLoseTime() {
+        return loseTime;
+    }
 
-    public void setLoseTime(Date losetime){this.loseTime=loseTime;}
+    public void setLoseTime(Date losetime) {
+        this.loseTime = loseTime;
+    }
 
     public String getUserId() {
         return userId;
     }
 
-    public String getTenant(){
+    public String getTenant() {
         return tenant;
     }
 
-    public void setTenant(String tenant){ this.tenant=tenant;}
+    public void setTenant(String tenant) {
+        this.tenant = tenant;
+    }
 
-    public String getBelongTo(){
+    public String getBelongTo() {
         return belongTo;
     }
 
-    public void setBelongTo(String belongTo){ this.belongTo=belongTo;}
+    public void setBelongTo(String belongTo) {
+        this.belongTo = belongTo;
+    }
 
     public void setUserId(String userId) {
         this.userId = userId;

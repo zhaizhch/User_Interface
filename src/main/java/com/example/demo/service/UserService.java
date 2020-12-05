@@ -77,10 +77,10 @@ public class UserService {
     public int insertUserInfo(UserDto userDto) {
         int ret = -1;
         try {
-            if(userDto.getAuthority()==null){
+            if (userDto.getAuthority() == null) {
                 userDto.setAuthority(1);
             }
-            if(userDto.getTenant()==null){
+            if (userDto.getTenant() == null) {
                 userDto.setTenant("0");
             }
             userDto.setUserId(CommonUtils.getRandomStr());
@@ -100,11 +100,11 @@ public class UserService {
 
     //通过token查询用户信息是否存在
     public List<User> queryUserInfoByToken(UserDto userDto) {
-        try{
+        try {
             List<User> userInfoList = userMapper.queryUserInfoByToken(userDto);
             logger.info("queryUserInfoByToken -> userInfoList = " + userInfoList);
             return userInfoList;
-        }catch (Exception e) {
+        } catch (Exception e) {
             logger.error(e.getMessage(), e);
             logger.info("查询数据失败, queryUserInfoByToken -> token = " + userDto.getToken());
             return null;
